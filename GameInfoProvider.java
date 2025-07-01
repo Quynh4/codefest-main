@@ -2,8 +2,10 @@ package com.example;
 import jsclub.codefest.sdk.Hero;
 import jsclub.codefest.sdk.algorithm.PathUtils;
 import jsclub.codefest.sdk.base.Node;
+import jsclub.codefest.sdk.model.ElementType;
 import jsclub.codefest.sdk.model.GameMap;
 import jsclub.codefest.sdk.model.obstacles.Obstacle;
+import jsclub.codefest.sdk.model.obstacles.ObstacleTag;
 import jsclub.codefest.sdk.model.players.Player;
 import jsclub.codefest.sdk.model.weapon.Weapon;
 
@@ -26,11 +28,20 @@ public class GameInfoProvider {
     }
 
     private List<Node> computeNodesToAvoid() {
-        List<Node> nodes = new ArrayList<>(gameMap.getListIndestructibles());
-        nodes.removeAll(gameMap.getObstaclesByTag("CAN_GO_THROUGH"));
+        List<Node> nodes = new ArrayList<>();
+        nodes.addAll(
+                gameMap.getListObstacles().stream()
+                        .filter(obstacle ->
+                                obstacle.getType() == ElementType.TRAP ||
+                                !obstacle.getTag().contains(ObstacleTag.CAN_GO_THROUGH)
+                        )
+                        .toList()
+        );
+        nodes.addAll(gameMap.getListEnemies());
         nodes.addAll(gameMap.getOtherPlayerInfo());
         return nodes;
     }
+
 
     public List<Node> getNodesToAvoid() {
         return nodesToAvoid;
@@ -148,6 +159,13 @@ public class GameInfoProvider {
         return getNearestWeaponFromList(gameMap.getListWeapons());
     }
 
+    public Obstacle getNearestChest() {
+        List<Obstacle> chests = gameMap.getListChests();
+        return chests.stream()
+                .min((a, b) -> Double.compare(PathUtils.distance(player, a), PathUtils.distance(player, b)))
+                .orElse(null);
+    }
+
     private Weapon getNearestWeaponFromList(List<Weapon> weapons) {
         Weapon nearest = null;
         double minDistance = Double.MAX_VALUE;
@@ -188,6 +206,19 @@ public class GameInfoProvider {
         } else {
             return dy > 0 ? "d" : "u";
         }
+    }
+
+    public String getDirectionToAdjacent(Node target) {
+        int dx = target.getX() - player.getX();
+        int dy = player.getY() - target.getY();
+
+        if (Math.abs(dx) + Math.abs(dy) == 1) {
+            if (dx == 1) return "r";
+            if (dx == -1) return "l";
+            if (dy == 1) return "d";
+            if (dy == -1) return "u";
+        }
+        return null;
     }
 
     public String getRandomDirection() {
@@ -247,6 +278,14 @@ public class GameInfoProvider {
 
         return true;
     }
+
+
+    public List<Weapon> getWeaponByType(ElementType type) {
+        return gameMap.getListWeapons().stream()
+                .filter(w -> w.getType() == type)
+                .collect(Collectors.toList());
+    }
+
 
 
 }

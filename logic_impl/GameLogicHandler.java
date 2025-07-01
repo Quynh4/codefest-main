@@ -1,13 +1,12 @@
-package com.example;
+package com.example.logic_impl;
 
+import com.example.GameInfoProvider;
 import jsclub.codefest.sdk.Hero;
 import jsclub.codefest.sdk.algorithm.PathUtils;
-import jsclub.codefest.sdk.base.Node;
 import jsclub.codefest.sdk.model.players.Player;
 import jsclub.codefest.sdk.model.weapon.Weapon;
 
 import java.io.IOException;
-import java.util.List;
 
 public abstract class GameLogicHandler {
     protected final Hero hero;
