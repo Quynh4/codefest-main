@@ -1,6 +1,5 @@
-package com.example;
+package com.example.logic_impl;
 
-import com.example.logic_impl.GameLogicHandler;
 import jsclub.codefest.sdk.Hero;
 import jsclub.codefest.sdk.model.players.Player;
 import jsclub.codefest.sdk.model.weapon.Weapon;
