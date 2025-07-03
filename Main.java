@@ -1,7 +1,7 @@
 package com.example;
 
-import com.example.logic_impl.ChestAttackLogic;
 import com.example.logic_impl.GameLogicHandler;
+import com.example.logic_impl.SimpleAttackLogic;
 import io.socket.emitter.Emitter;
 import jsclub.codefest.sdk.Hero;
 import java.io.IOException;
@@ -35,7 +35,7 @@ class MapUpdateListener implements Emitter.Listener {
 
             hero.getGameMap().updateOnUpdateMap(args[0]);
 
-            GameLogicHandler logic = new ChestAttackLogic(hero);
+            GameLogicHandler logic = new SimpleAttackLogic(hero);
             logic.handleTurn();
 
         } catch (Exception e) {
