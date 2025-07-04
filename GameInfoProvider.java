@@ -33,7 +33,7 @@ public class GameInfoProvider {
                 gameMap.getListObstacles().stream()
                         .filter(obstacle ->
                                 obstacle.getType() == ElementType.TRAP ||
-                                !obstacle.getTag().contains(ObstacleTag.CAN_GO_THROUGH)
+                                !obstacle.getTags().contains(ObstacleTag.CAN_GO_THROUGH)
                         )
                         .toList()
         );
@@ -160,11 +160,15 @@ public class GameInfoProvider {
     }
 
     public Obstacle getNearestChest() {
-        List<Obstacle> chests = gameMap.getListChests();
+        List<Obstacle> chests = gameMap.getListObstacles().stream()
+                .filter(e -> e.getType() == ElementType.CHEST)
+                .toList();
+
         return chests.stream()
                 .min((a, b) -> Double.compare(PathUtils.distance(player, a), PathUtils.distance(player, b)))
                 .orElse(null);
     }
+
 
     private Weapon getNearestWeaponFromList(List<Weapon> weapons) {
         Weapon nearest = null;

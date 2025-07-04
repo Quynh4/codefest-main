@@ -30,7 +30,7 @@ public abstract class GameLogicHandler {
             hero.attack(direction);
         } else if (hero.getInventory().getThrowable() != null) {
             System.out.println("Throwing item at distance: " + distance);
-            hero.throwItem(direction, distance);
+            hero.throwItem(direction);
         } else {
             System.out.println("No weapon equipped!");
         }

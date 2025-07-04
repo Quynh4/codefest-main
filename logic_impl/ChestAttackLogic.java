@@ -3,8 +3,8 @@ package com.example.logic_impl;
 import jsclub.codefest.sdk.Hero;
 import jsclub.codefest.sdk.algorithm.PathUtils;
 import jsclub.codefest.sdk.model.armors.Armor;
-import jsclub.codefest.sdk.model.healing_items.HealingItem;
 import jsclub.codefest.sdk.model.obstacles.Obstacle;
+import jsclub.codefest.sdk.model.support_items.SupportItem;
 import jsclub.codefest.sdk.model.weapon.Weapon;
 
 import java.io.IOException;
@@ -28,7 +28,7 @@ public class ChestAttackLogic extends GameLogicHandler {
                 return;
             }
         }
-        for (HealingItem h : info.getGameMap().getListHealingItems()) {
+        for (SupportItem h : info.getGameMap().getListSupportItems()) {
             if (h.getX() == x && h.getY() == y) {
                 System.out.println("[LOG] Found healing item at current position: " + h);
                 hero.pickupItem();
