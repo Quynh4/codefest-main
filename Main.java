@@ -11,7 +11,7 @@ public class Main {
     private static final String SERVER_URL = "https://cf25-server.jsclub.dev";
     private static final String GAME_ID = "164228";
     private static final String PLAYER_NAME = "Q";
-    private static final String SECRET_KEY = "sk-ylFJB0fyQ_63cnYEC4Bqbw:r0brCBio4T5NvxE9Vu58_eh7NoES1vMyDH8Kb4w-4IIoQFVLP3L2kI-EMIsH4sPJ3Szji9g-X_aPpDMd5cotAQ";
+    private static final String SECRET_KEY = "sk-y60RxBHPRyK3aAPmLNSzNQ:zeKixgtjK4Nf9NBGVYED0GkdE5T8L41MGBneyuarTnumGDOo9Y2zqOE_BNoifbWcIuOe4N0cCpdZWD4WWf7y0A";
 
     public static void main(String[] args) throws IOException {
         Hero hero = new Hero(GAME_ID, PLAYER_NAME, SECRET_KEY);

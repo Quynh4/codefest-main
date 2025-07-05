@@ -220,6 +220,27 @@ public class GameInfoProvider {
         return nearest;
     }
 
+
+    public Node getNearestPlayerORChest() {
+        List<Node> nodeList = new ArrayList<>(gameMap.getOtherPlayerInfo());
+        nodeList.addAll(gameMap.getListObstacles().stream()
+                .filter(e -> e.getType() == ElementType.CHEST)
+                .toList());
+
+        Node nearest = null;
+        int minDistance = Integer.MAX_VALUE;
+
+        for (Node p : nodeList) {
+            int distance = PathUtils.distance(player, p);
+            if (distance < minDistance) {
+                minDistance = distance;
+                nearest = p;
+            }
+
+        }
+        return nearest;
+    }
+
     public String getDirectionTo(Node to) {
         int dx = to.getX() - player.getX();
         int dy = to.getY() - player.getY();
@@ -456,6 +477,54 @@ public class GameInfoProvider {
         }
         // Nếu không tìm thấy phần tử, log và trả về false
         System.out.println("No matching element found near the current node.");
+        return null;
+    }
+
+    public Element getNearElementByListType(List<ElementType> elementTypeList, int distance) {
+        // Lấy tọa độ hiện tại của node
+        int currentX = player.getX();
+        int currentY = player.getY();
+        if(elementTypeList.contains(ElementType.PLAYER)){
+            for (int i = 1; i <= distance; i++) {
+                if(checkOtherPlayerInNode(currentX + i, currentY)!=null) return checkOtherPlayerInNode(currentX + i, currentY);
+                if(checkOtherPlayerInNode(currentX - i, currentY)!=null) return checkOtherPlayerInNode(currentX - i, currentY);
+                if(checkOtherPlayerInNode(currentX, currentY + i)!=null) return checkOtherPlayerInNode(currentX, currentY + i);
+                if(checkOtherPlayerInNode(currentX, currentY - i)!=null) return checkOtherPlayerInNode(currentX, currentY - i);
+            }
+            return null;
+        }
+        // Duyệt qua các ô trong khoảng cách xác định chỉ theo hàng hoặc cột
+        for (int i = 1; i <= distance; i++) {
+            // Kiểm tra các ô theo cùng hàng (theo trục X)
+            // Tọa độ hàng giữ nguyên, chỉ thay đổi cột (X +/- i)
+            Element elementAtRight = gameMap.getElementByIndex(currentX + i, currentY);
+            if (elementTypeList.contains(elementAtRight.getType()) &&  isInSafeZone()) {
+                return elementAtRight;
+            }
+            Element elementAtLeft = gameMap.getElementByIndex(currentX - i, currentY);
+            if (elementTypeList.contains(elementAtLeft.getType()) && isInSafeZone()) {
+                return elementAtLeft;
+            }
+            // Kiểm tra các ô theo cùng cột (theo trục Y)
+            // Tọa độ cột giữ nguyên, chỉ thay đổi hàng (Y +/- i)
+            Element elementAtUp = gameMap.getElementByIndex(currentX, currentY + i);
+            if (elementTypeList.contains(elementAtUp.getType()) && isInSafeZone()) {
+                return elementAtUp;
+            }
+            Element elementAtDown = gameMap.getElementByIndex(currentX, currentY - i);
+            if (elementTypeList.contains(elementAtDown.getType()) && isInSafeZone()) {
+                return elementAtDown;
+            }
+        }
+        // Nếu không tìm thấy phần tử, log và trả về false
+        System.out.println("No matching element found near the current node.");
+        return null;
+    }
+
+    public Player findElement(Element element) {
+        for (Player p : gameMap.getOtherPlayerInfo()) {
+            if (p.getX() == element.getX() && p.getY() == element.getY()) return p;
+        }
         return null;
     }
 

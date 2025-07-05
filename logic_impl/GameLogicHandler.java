@@ -126,9 +126,45 @@ public abstract class GameLogicHandler {
 //        }
 //    }
 
-    public void findNAttackPlayer(ElementType elementType) throws IOException {
-        Player nearestPlayer = info.getNearestPlayer();
-        if (nearestPlayer == null) {
+//    public void findNAttackPlayer(ElementType elementType) throws IOException {
+//        Player nearestPlayer = info.getNearestPlayer();
+//        if (nearestPlayer == null) {
+//            findAssests();
+//            return;
+//        }
+//
+//        int[] rangeInfo = getWeaponRangeByType(elementType);
+//
+//        int effectiveDistance = rangeInfo[1]; // khoảng cách theo hướng đánh
+//
+//        Element nearPlayerNode = info.getNearElement(ElementType.PLAYER, effectiveDistance);
+//
+//        if (nearPlayerNode != null) {
+//            Player nearPlayer = info.findPlayer(nearPlayerNode);
+//            if (nearPlayer != null && nearPlayer.getHealth() > 0) {
+//                String dir = info.getDirectionTo(nearPlayerNode);
+//                switch (elementType) {
+//                    case THROWABLE -> hero.throwItem(dir);
+//                    case MELEE -> hero.attack(dir);
+//                    case GUN -> hero.shoot(dir);
+//                }
+//                return;
+//            }
+//        }
+//
+//        // Nếu không tấn công được thì di chuyển đến gần người chơi khác
+//        String path = info.getShortestPathTo(nearestPlayer);
+//        if (path != null) {
+//            hero.move(path);
+//        } else {
+//            findAssests();
+//        }
+//    }
+
+
+    public void findNAttackPlayerORChest(ElementType elementType) throws IOException {
+        Node nearestPlayerORChest = info.getNearestPlayerORChest();
+        if (nearestPlayerORChest == null) {
             findAssests();
             return;
         }
@@ -137,23 +173,22 @@ public abstract class GameLogicHandler {
 
         int effectiveDistance = rangeInfo[1]; // khoảng cách theo hướng đánh
 
-        Element nearPlayerNode = info.getNearElement(ElementType.PLAYER, effectiveDistance);
+        Element nearPlayerORChestNode = info.getNearElementByListType(
+                List.of(ElementType.PLAYER, ElementType.CHEST),
+                effectiveDistance);
 
-        if (nearPlayerNode != null) {
-            Player nearPlayer = info.findPlayer(nearPlayerNode);
-            if (nearPlayer != null && nearPlayer.getHealth() > 0) {
-                String dir = info.getDirectionTo(nearPlayerNode);
-                switch (elementType) {
-                    case THROWABLE -> hero.throwItem(dir);
-                    case MELEE -> hero.attack(dir);
-                    case GUN -> hero.shoot(dir);
-                }
-                return;
+        if (nearPlayerORChestNode != null) {
+            String dir = info.getDirectionTo(nearPlayerORChestNode);
+            switch (elementType) {
+                case THROWABLE -> hero.throwItem(dir);
+                case MELEE -> hero.attack(dir);
+                case GUN -> hero.shoot(dir);
             }
+            return;
         }
 
         // Nếu không tấn công được thì di chuyển đến gần người chơi khác
-        String path = info.getShortestPathTo(nearestPlayer);
+        String path = info.getShortestPathTo(nearestPlayerORChest);
         if (path != null) {
             hero.move(path);
         } else {

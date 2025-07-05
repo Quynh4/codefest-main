@@ -6,6 +6,7 @@ import jsclub.codefest.sdk.model.Element;
 import jsclub.codefest.sdk.model.ElementType;
 import jsclub.codefest.sdk.model.GameMap;
 import jsclub.codefest.sdk.model.players.Player;
+import jsclub.codefest.sdk.model.support_items.SupportItem;
 
 import java.io.IOException;
 
@@ -26,9 +27,11 @@ public class VooTreeLogic extends GameLogicHandler {
         System.out.println("[BOT] Current Position: (" + currentNode.x + "," + currentNode.y + ")");
         System.out.println("[BOT] HP: " + player.getHealth());
 
-        if (player.getHealth() < 60 && hero.getInventory().getListSupportItem() != null) {
-            System.out.println("[BOT] Use support item" + hero.getInventory().getListSupportItem());
-            hero.useItem(hero.getInventory().getListSupportItem().getFirst().getId());
+        if (player.getHealth() < 60 && hero.getInventory().getListSupportItem() != null
+                && !hero.getInventory().getListSupportItem().isEmpty()) {
+            SupportItem supportItem = hero.getInventory().getListSupportItem().getFirst();
+            System.out.println("[BOT] Use support item" + supportItem.getId());
+            hero.useItem(supportItem.getId());
             return;
         }
 
@@ -46,7 +49,7 @@ public class VooTreeLogic extends GameLogicHandler {
         ElementType weapon = info.checkHaveWeapon();
         if (weapon != null) {
             System.out.println("[BOT] Has weapon: " + weapon + " → Searching for enemy.");
-            findNAttackPlayer(weapon);
+            findNAttackPlayerORChest(weapon);
         } else {
             // Nếu không có vũ khí → đi tìm đồ
             System.out.println("[BOT] No weapon found → Searching for assets.");
