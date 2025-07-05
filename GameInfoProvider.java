@@ -18,14 +18,19 @@ import java.util.stream.Collectors;
 import static jsclub.codefest.sdk.algorithm.PathUtils.checkInsideSafeArea;
 
 public class GameInfoProvider {
-    static List<ElementType> LISTASSETTYPES = new ArrayList<ElementType>() {{
+    static List<ElementType> COLLECTIBLE_TYPES = new ArrayList<ElementType>() {{
+        // Rương để attack
         add(ElementType.CHEST);
+        // Vũ khí
         add(ElementType.MELEE);
-        add(ElementType.ARMOR);
         add(ElementType.GUN);
         add(ElementType.THROWABLE);
-        add(ElementType.BULLET);
-        add(ElementType.HEALING_ITEM);
+        add(ElementType.SPECIAL);
+        // Đồ bảo hộ
+        add(ElementType.ARMOR);
+        add(ElementType.HELMET);
+        // Trị thương
+        add(ElementType.SUPPORT_ITEM);
 
     }};
     private final Hero hero;
@@ -310,18 +315,18 @@ public class GameInfoProvider {
         return checkInsideSafeArea(player, safeZone, mapSize);
     }
 
-    public Element getNearAssetElement(GameMap gameMap, Hero hero, Node currentNode) throws IOException {
+    public Element getNearAssetElement(){
         // Lấy tọa độ hiện tại của Hero
-        int heroX = currentNode.getX();
-        int heroY = currentNode.getY();
+        int heroX = player.getX();
+        int heroY = player.getY();
 
         // Các tọa độ xung quanh Hero cách 1 ô
         int[][] directions = {
-                {0,0},//chính ô hero
+                {0, 0},  //chính ô hero
                 {0, 1},  // Phía trên (North)
                 {0, -1}, // Phía dưới (South)
                 {1, 0},  // Phía phải (East)
-                {-1, 0}// Phía trái (West)
+                {-1, 0}  // Phía trái (West)
 
         };
         // Duyệt qua các ô xung quanh hero
@@ -330,9 +335,9 @@ public class GameInfoProvider {
             int newY = heroY + direction[1];
             // Lấy Element ở tọa độ (newX, newY)
             Element element = gameMap.getElementByIndex(newX, newY);
-            // Kiểm tra nếu element tồn tại và thuộc loại trong LISTASSETTYPES
-            if (element != null && LISTASSETTYPES.contains(element.getType())
-                    && checkPlayerInNode(newX,newY) ==null) {
+            // Kiểm tra nếu element tồn tại và thuộc loại trong COLLECTIBLE_TYPES
+            if (element != null && COLLECTIBLE_TYPES.contains(element.getType())
+                    && checkOtherPlayerInNode(newX,newY) ==null) {
                 System.out.println("Found item " + element.getId());
                 return element;  // Trả về element nếu thỏa mãn điều kiện
             }
@@ -341,7 +346,7 @@ public class GameInfoProvider {
         return null;
     }
 
-    public Player checkPlayerInNode(int x,int y){
+    public Player checkOtherPlayerInNode(int x,int y){
         List<Player> listPlayer= gameMap.getOtherPlayerInfo();
         for(Player p: listPlayer){
             if(p.x==x && p.y==y) return p;
@@ -386,8 +391,6 @@ public class GameInfoProvider {
                 break;
 
             case ARMOR:
-                // Kiểm tra loại giáp: VEST -> BODY, POT hoặc HELMET -> HEAD
-                String armorId = nearAssetElement.getId();
                 if (hero.getInventory().getArmor() != null) {
                     return hero.getInventory().getArmor().getId();
                 }
@@ -397,8 +400,8 @@ public class GameInfoProvider {
         return null; // Nếu chưa đầy với loại này, trả về null
     }
 
-    public boolean isReach(Node x, Node y) {
-        return x.x == y.x && x.y == y.y;
+    public boolean isReach(Node y) {
+        return player.x == y.x && player.y == y.y;
     }
 
     public Element getNearElement(Node currentNode, GameMap gameMap, ElementType elementType, int distance) {
@@ -407,10 +410,10 @@ public class GameInfoProvider {
         int currentY = currentNode.getY();
         if(elementType==ElementType.PLAYER){
             for (int i = 1; i <= distance; i++) {
-                if(checkPlayerInNode(currentX + i, currentY)!=null) return checkPlayerInNode(currentX + i, currentY);
-                if(checkPlayerInNode(currentX - i, currentY)!=null) return checkPlayerInNode(currentX - i, currentY);
-                if(checkPlayerInNode(currentX, currentY + i)!=null) return checkPlayerInNode(currentX, currentY + i);
-                if(checkPlayerInNode(currentX, currentY - i)!=null) return checkPlayerInNode(currentX, currentY - i);
+                if(checkOtherPlayerInNode(currentX + i, currentY)!=null) return checkOtherPlayerInNode(currentX + i, currentY);
+                if(checkOtherPlayerInNode(currentX - i, currentY)!=null) return checkOtherPlayerInNode(currentX - i, currentY);
+                if(checkOtherPlayerInNode(currentX, currentY + i)!=null) return checkOtherPlayerInNode(currentX, currentY + i);
+                if(checkOtherPlayerInNode(currentX, currentY - i)!=null) return checkOtherPlayerInNode(currentX, currentY - i);
             }
             return null;
         }

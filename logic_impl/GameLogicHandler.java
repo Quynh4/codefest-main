@@ -8,7 +8,6 @@ import jsclub.codefest.sdk.model.Element;
 import jsclub.codefest.sdk.model.ElementType;
 import jsclub.codefest.sdk.model.GameMap;
 import jsclub.codefest.sdk.model.npcs.Enemy;
-import jsclub.codefest.sdk.model.obstacles.Obstacle;
 import jsclub.codefest.sdk.model.players.Player;
 import jsclub.codefest.sdk.model.weapon.Weapon;
 
@@ -21,10 +20,12 @@ import java.util.Queue;
 public abstract class GameLogicHandler {
     protected final Hero hero;
     protected final GameInfoProvider info;
+    protected final GameMap gameMap;
 
     public GameLogicHandler(Hero hero) {
         this.hero = hero;
         this.info = new GameInfoProvider(hero);
+        this.gameMap = info.getGameMap();
     }
 
     public abstract void handleTurn() throws IOException;
@@ -96,10 +97,10 @@ public abstract class GameLogicHandler {
         System.out.println("No path to any central node found.");
     }
 
-    public void attackPlayer(GameMap gameMap, Player player, Node currentNode, ElementType elementType) throws IOException {
+    public void attackPlayer(Player player, Node currentNode, ElementType elementType) throws IOException {
         Player nearestPlayer = info.getNearestPlayer();
         if (nearestPlayer == null) {
-            findAssests(gameMap, player, currentNode);
+            findAssests(player, currentNode);
             return;
         }
 
@@ -128,10 +129,10 @@ public abstract class GameLogicHandler {
         if (path != null) {
             hero.move(path);
         } else {
-            findAssests(gameMap, player, currentNode);
+            findAssests(player, currentNode);
         }
     }
-    public void findAssests(GameMap gameMap, Player player, Node currentNode) throws IOException {
+    public void findAssests(Player player, Node currentNode) throws IOException {
         List<Node> listAssets = info.getListAssets();
 
         List<Node> restrictedNodes = new ArrayList<>();
@@ -166,7 +167,7 @@ public abstract class GameLogicHandler {
             }
 
             // Nếu đứng đúng ô chứa chest → nhặt
-            if (info.isReach(currentNode, nearestAsset)) {
+            if (info.isReach(nearestAsset)) {
                 System.out.println("[BOT] Đứng tại ô chest → Nhặt đồ");
                 info.getChestItems(nearestAsset, currentNode);
                 return;
@@ -183,7 +184,7 @@ public abstract class GameLogicHandler {
 
         } else {
             // Nếu là đồ bình thường
-            if (info.isReach(player, nearestAsset)) {
+            if (info.isReach(nearestAsset)) {
                 System.out.println("[BOT] Đứng tại vị trí asset → Nhặt đồ");
                 hero.pickupItem();
             } else {
@@ -228,4 +229,55 @@ public abstract class GameLogicHandler {
             hero.move(info.getRandomDirection());
         }
     }
+
+
+/**
+ * Kiểm tra và xử lý item gần người chơi.
+ * <p>
+ * Nếu là chest thì tấn công nó.
+ * Nếu đứng trên item:
+ *   - Nếu kho đồ đầy, sử dụng hoặc loại bỏ item cũ.
+ *   - Nếu chưa đầy, nhặt item.
+ * Nếu chưa đứng trên item thì di chuyển về hướng item.
+ */
+    public void handleNearElement() throws IOException {
+        Element nearElement = info.getNearAssetElement();
+        if (nearElement != null) {
+            log("[BOT] Found nearby item: %s at (%d,%d)", nearElement.getType(), nearElement.getX(), nearElement.getY());
+
+            if (nearElement.getType() == ElementType.CHEST) {
+                String direction = info.getDirectionTo(new Node(nearElement.getX(), nearElement.getY()));
+                hero.attack(direction);
+                return;
+            }
+
+            Node assetNode = new Node(nearElement.getX(), nearElement.getY());
+            if (info.isReach(assetNode)) {
+                String idToRevoke = info.getInventoryIdIfFullInventory(hero, nearElement);
+                if (idToRevoke != null) {
+                    if (nearElement.getType() == ElementType.HEALING_ITEM) {
+                        log("[BOT] Inventory full → Using healing item: %s", idToRevoke);
+                        hero.useItem(idToRevoke);
+                    } else {
+                        log("[BOT] Inventory full → Revoking item: %s", idToRevoke);
+                        hero.revokeItem(idToRevoke);
+                    }
+                } else {
+                    log("[BOT] Picking up item.");
+                    hero.pickupItem();
+                }
+            } else {
+                String moveDir = info.getDirectionTo(assetNode);
+                log("[BOT] Moving toward item. Direction: %s", moveDir);
+                hero.move(moveDir);
+            }
+        }
+    }
+
+
+
+    protected void log(String message, Object... args) {
+        System.out.printf((message) + "%n", args);
+    }
+
 }
