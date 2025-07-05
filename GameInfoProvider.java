@@ -315,6 +315,20 @@ public class GameInfoProvider {
         return checkInsideSafeArea(player, safeZone, mapSize);
     }
 
+
+    /**
+     * Finds and returns a nearby collectible element around the hero.
+     * .
+     * The method checks the hero's current tile and the four adjacent tiles
+     * (up, down, left, right). It returns the first element found that:
+     * - Is not null
+     * - Is in the COLLECTIBLE_TYPES list
+     * - Is not occupied by another player
+     * .
+     * Returns null if no suitable element is found.
+     *
+     * @return a nearby collectible Element or null if none found
+     */
     public Element getNearAssetElement(){
         // Lấy tọa độ hiện tại của Hero
         int heroX = player.getX();
@@ -404,10 +418,10 @@ public class GameInfoProvider {
         return player.x == y.x && player.y == y.y;
     }
 
-    public Element getNearElement(Node currentNode, GameMap gameMap, ElementType elementType, int distance) {
+    public Element getNearElement(ElementType elementType, int distance) {
         // Lấy tọa độ hiện tại của node
-        int currentX = currentNode.getX();
-        int currentY = currentNode.getY();
+        int currentX = player.getX();
+        int currentY = player.getY();
         if(elementType==ElementType.PLAYER){
             for (int i = 1; i <= distance; i++) {
                 if(checkOtherPlayerInNode(currentX + i, currentY)!=null) return checkOtherPlayerInNode(currentX + i, currentY);
@@ -481,13 +495,10 @@ public class GameInfoProvider {
         return list;
     }
 
-    public void getChestItems(Node chest, Node currentNode) throws IOException {
-        hero.attack(getRelativeDirection(chest, currentNode));
-    }
 
-    public String getRelativeDirection(Node target, Node current) {
-        int dx = target.x - current.x;
-        int dy = target.y - current.y;
+    public String getRelativeDirection(Node target) {
+        int dx = target.x - player.x;
+        int dy = target.y - player.y;
 
         if (dx == 1 && dy == 0) return "r";
         if (dx == -1 && dy == 0) return "l";
@@ -501,6 +512,11 @@ public class GameInfoProvider {
         if(hero.getInventory().getGun()!=null) return ElementType.GUN;
         if(hero.getInventory().getThrowable()!=null) return ElementType.THROWABLE;
         return null;
+    }
+
+    public String getShortestPathTo(Node target){
+        return PathUtils.getShortestPath(gameMap,
+                nodesToAvoid, player, target, true);
     }
 
 }

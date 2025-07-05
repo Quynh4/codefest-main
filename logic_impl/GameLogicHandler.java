@@ -50,13 +50,7 @@ public abstract class GameLogicHandler {
     protected void moveToOrPickup(Weapon weapon) throws IOException {
         if (weapon == null) return;
 
-        String path = PathUtils.getShortestPath(
-                info.getGameMap(),
-                info.getNodesToAvoid(),
-                info.getPlayer(),
-                weapon,
-                false
-        );
+        String path = info.getShortestPathTo(weapon);
 
         if (path != null) {
             if (path.isEmpty()) {
@@ -69,7 +63,6 @@ public abstract class GameLogicHandler {
 
     public void moveToCenterNode() throws IOException {
         int mapSize = info.getGameMap().getMapSize();
-        Node current = info.getPlayer();
         boolean[][] visited = new boolean[mapSize][mapSize];
 
         Queue<Node> queue = new LinkedList<>();
@@ -81,7 +74,7 @@ public abstract class GameLogicHandler {
             if (visited[target.x][target.y]) continue;
             visited[target.x][target.y] = true;
 
-            String path = PathUtils.getShortestPath(info.getGameMap(), info.getNodesToAvoid(), current, target, false);
+            String path = info.getShortestPathTo(target);
             if (path != null) {
                 hero.move(path);
                 return;
@@ -96,21 +89,55 @@ public abstract class GameLogicHandler {
 
         System.out.println("No path to any central node found.");
     }
+//
+//    public void attackPlayer(Player player, Node currentNode, ElementType elementType) throws IOException {
+//        Player nearestPlayer = info.getNearestPlayer();
+//        if (nearestPlayer == null) {
+//            findAssests();
+//            return;
+//        }
+//
+//        int range = switch (elementType) {
+//            case THROWABLE -> 6;
+//            case GUN -> 4;
+//            default -> 1;
+//        };
+//
+//        Element nearPlayerNode = info.getNearElement(ElementType.PLAYER, range);
+//
+//        if (nearPlayerNode != null) {
+//            Player nearPlayer = info.findPlayer(nearPlayerNode);
+//            if (nearPlayer != null && nearPlayer.getHealth() > 0) {
+//                String dir = info.getDirectionTo(nearPlayerNode);
+//                switch (elementType) {
+//                    case THROWABLE -> hero.throwItem(dir);
+//                    case MELEE -> hero.attack(dir);
+//                    case GUN -> hero.shoot(dir);
+//                }
+//                return;
+//            }
+//        }
+//
+//        String path = PathUtils.getShortestPath(gameMap, info.getNodesToAvoid(), currentNode, nearestPlayer, false);
+//        if (path != null) {
+//            hero.move(path);
+//        } else {
+//            findAssests();
+//        }
+//    }
 
-    public void attackPlayer(Player player, Node currentNode, ElementType elementType) throws IOException {
+    public void findNAttackPlayer(ElementType elementType) throws IOException {
         Player nearestPlayer = info.getNearestPlayer();
         if (nearestPlayer == null) {
-            findAssests(player, currentNode);
+            findAssests();
             return;
         }
 
-        int range = switch (elementType) {
-            case THROWABLE -> 6;
-            case GUN -> 4;
-            default -> 1;
-        };
+        int[] rangeInfo = getWeaponRangeByType(elementType);
 
-        Element nearPlayerNode = info.getNearElement(currentNode, gameMap, ElementType.PLAYER, range);
+        int effectiveDistance = rangeInfo[1]; // khoảng cách theo hướng đánh
+
+        Element nearPlayerNode = info.getNearElement(ElementType.PLAYER, effectiveDistance);
 
         if (nearPlayerNode != null) {
             Player nearPlayer = info.findPlayer(nearPlayerNode);
@@ -125,21 +152,23 @@ public abstract class GameLogicHandler {
             }
         }
 
-        String path = PathUtils.getShortestPath(gameMap, info.getNodesToAvoid(), currentNode, nearestPlayer, false);
+        // Nếu không tấn công được thì di chuyển đến gần người chơi khác
+        String path = info.getShortestPathTo(nearestPlayer);
         if (path != null) {
             hero.move(path);
         } else {
-            findAssests(player, currentNode);
+            findAssests();
         }
     }
-    public void findAssests(Player player, Node currentNode) throws IOException {
+
+    public void findAssests() throws IOException {
         List<Node> listAssets = info.getListAssets();
 
         List<Node> restrictedNodes = new ArrayList<>();
         for (Enemy e : gameMap.getListEnemies()) restrictedNodes.add(new Node(e.x, e.y));
         restrictedNodes.addAll(gameMap.getOtherPlayerInfo());
 
-        Node nearestAsset = info.getNearestAsset(listAssets, currentNode, restrictedNodes);
+        Node nearestAsset = info.getNearestAsset(listAssets, info.getPlayer(), restrictedNodes);
         if (nearestAsset == null) {
             System.out.println("[BOT] Không có asset nào xung quanh.");
             return;
@@ -154,7 +183,7 @@ public abstract class GameLogicHandler {
         if (targetElement.getType() == ElementType.CHEST) {
             System.out.println("[BOT] Phát hiện chest gần nhất tại: (" + nearestAsset.x + "," + nearestAsset.y + ")");
 
-            Node nearChest = info.getNearElement(currentNode, gameMap, ElementType.CHEST, 1);
+            Node nearChest = info.getNearElement(ElementType.CHEST, 1);
 
             // Nếu chest kề bên → tấn công
             if (nearChest != null) {
@@ -168,13 +197,13 @@ public abstract class GameLogicHandler {
 
             // Nếu đứng đúng ô chứa chest → nhặt
             if (info.isReach(nearestAsset)) {
-                System.out.println("[BOT] Đứng tại ô chest → Nhặt đồ");
-                info.getChestItems(nearestAsset, currentNode);
+                System.out.println("[BOT] Đứng tại ô chest → Đập chest");
+                hero.attack(info.getRelativeDirection(nearestAsset));
                 return;
             }
 
             // Nếu ở xa chest → di chuyển tới
-            String path = PathUtils.getShortestPath(gameMap, restrictedNodes, currentNode, nearestAsset, false);
+            String path = info.getShortestPathTo(nearestAsset);
             if (path != null) {
                 System.out.println("[BOT] Di chuyển đến chest. Path: " + path);
                 hero.move(path);
@@ -188,7 +217,7 @@ public abstract class GameLogicHandler {
                 System.out.println("[BOT] Đứng tại vị trí asset → Nhặt đồ");
                 hero.pickupItem();
             } else {
-                String path = PathUtils.getShortestPath(gameMap, restrictedNodes, currentNode, nearestAsset, false);
+                String path = info.getShortestPathTo(nearestAsset);
                 if (path != null) {
                     System.out.println("[BOT] Di chuyển đến asset. Path: " + path);
                     hero.move(path);
@@ -214,13 +243,7 @@ public abstract class GameLogicHandler {
             }
         }
 
-        String path = PathUtils.getShortestPath(
-                info.getGameMap(),
-                info.getNodesToAvoid(),
-                info.getPlayer(),
-                enemy,
-                false
-        );
+        String path = info.getShortestPathTo(enemy);
 
         if (path != null) {
             hero.move(path);
@@ -274,6 +297,16 @@ public abstract class GameLogicHandler {
         }
     }
 
+
+    public int[] getWeaponRangeByType(ElementType elementType) {
+        return switch (elementType) {
+            case GUN -> hero.getInventory().getGun().getRange();
+            case MELEE -> hero.getInventory().getMelee().getRange();
+            case THROWABLE -> hero.getInventory().getThrowable().getRange();
+            case SPECIAL -> hero.getInventory().getThrowable().getRange();
+            default -> new int[]{0, 0}; // không có vũ khí, hoặc không tấn công được
+        };
+    }
 
 
     protected void log(String message, Object... args) {
